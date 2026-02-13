@@ -146,12 +146,14 @@ def print_solution_path(node):
     while node is not None:
         path.append(node) # store the node itself to access move, g, h, f later
         node = node.parent
+    
+    path.reverse() # reverse to get path from start to goal
         
     print(f"\nSolution depth: {path[-1].g}\n")
     for step in path:
         print(f"Move: {step.move}   g(n)={step.g}  h(n)={step.h}  f(n)={step.f}")
         print_puzzle(step.state)
-    return list(reversed(path))
+    return path
 
 def main():
     # Predefined puzzles
