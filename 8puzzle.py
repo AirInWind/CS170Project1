@@ -2,12 +2,13 @@ import heapq
 import copy
 
 class SearchNode:
-    def __init__(self, state, parent, cost, heuristic):
+    def __init__(self, state, parent, cost, heuristic, move='Start'):
         self.parent = parent
         self.state = state
         self.g = cost               # g(n) = cost from start to current node
         self.h = heuristic          # h(n) = heuristic estimate from current node to goal
         self.f = cost + heuristic   # f(n) = g(n) + h(n)
+        self.move = move            # store the move that led to this state
 
 # find blank index
 def find_blank_index(puzzle):
@@ -19,17 +20,17 @@ def get_neighbors(puzzle):
     blank_row, blank_col = divmod(blank_index, 3) # 3x3 puzzle assumption
     # check which row,col blank is in and generate neighbors accordingly
     neighbors = []
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, Down, Left, Right
+    directions = [(-1, 0, 'U'), (1, 0, 'D'), (0, -1, 'L'), (0, 1, 'R')]  # Up, Down, Left, Right
 
-    for dr, dc in directions:
+    for dr, dc, move in directions:
         new_row = blank_row + dr
         new_col = blank_col + dc
 
         if 0 <= new_row < 3 and 0 <= new_col < 3:
             swap_index = new_row * 3 + new_col
             new_puzzle = puzzle.copy()
-            new_puzzle[blank_index], new_puzzle[swap_index] = new_puzzle[swap_index], new_puzzle[blank_index]
-            neighbors.append(new_puzzle)
+            new_puzzle[blank_index], new_puzzle[swap_index] = new_puzzle[swap_index], new_puzzle[blank_index] # swap blank with the adjacent tile
+            neighbors.append((new_puzzle, move)) # return both the new state and the move that led to it
     
     return neighbors
 
@@ -87,13 +88,13 @@ def general_search(puzzle, heuristic_fn):
             return current_node
         nodes_expanded += 1
         
-        for neighbor in get_neighbors(current_node.state):
+        for neighbor, move in get_neighbors(current_node.state):
             t = tuple(neighbor)
             new_g = current_node.g + 1
             if t not in best_g or new_g < best_g[t]:
                 h = heuristic_fn(neighbor)
                 best_g[t] = new_g
-                child_node = SearchNode(state=neighbor, parent=current_node, cost=new_g, heuristic=h)
+                child_node = SearchNode(state=neighbor, parent=current_node, cost=new_g, heuristic=h, move=move)
                 tie_breaker += 1
                 heapq.heappush(queue, (child_node.f, tie_breaker, child_node))
             
@@ -143,12 +144,13 @@ def print_puzzle(puzzle):
 def print_solution_path(node):
     path = []
     while node is not None:
-        path.append(node.state)
+        path.append(node) # store the node itself to access move, g, h, f later
         node = node.parent
         
-    print(f"\nSolution depth: {len(path) - 1}\n")
-    for state in path:
-        print_puzzle(state)
+    print(f"\nSolution depth: {path[-1].g}\n")
+    for step in path:
+        print(f"Move: {step.move}   g(n)={step.g}  h(n)={step.h}  f(n)={step.f}")
+        print_puzzle(step.state)
     return list(reversed(path))
 
 def main():
