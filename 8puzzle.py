@@ -190,17 +190,49 @@ def main():
             if puzzle_choice not in ['1', '2', '3', '4', '5']:
                 print("Invalid choice.")
                 continue
-            
+
             puzzle = puzzles[int(puzzle_choice)][1]
             puzzle_name = puzzles[int(puzzle_choice)][0]
             print(f"\nSelected: {puzzle_name}")
             print(f"puzzle: {puzzle}")
-            run_a_star_manhattan(puzzle)
-            run_a_star_misplaced(puzzle)
-            run_ucs(puzzle)
+
+            search_choice = input("\nSelect search algorithm:\n1. Uniform Cost Search\n2. A* with Misplaced Tile Heuristic\n3. A* with Manhattan Distance Heuristic\nEnter choice (1-3): ").strip()
+            if search_choice not in ['1', '2', '3']:
+                print("Invalid choice.")
+                continue
+            if search_choice == '1':
+                run_ucs(puzzles[int(puzzle_choice)][1])
+            elif search_choice == '2':
+                run_a_star_misplaced(puzzles[int(puzzle_choice)][1])
+            elif search_choice == '3':
+                run_a_star_manhattan(puzzles[int(puzzle_choice)][1])
             
         elif menu_choice == "2":
-            print("\nWork in progress: Custom puzzle input not implemented yet.")
+            puzzle_input = input("\nEnter your puzzle as 9 numbers (0 for blank), separated by spaces (e.g. '1 2 3 4 5 6 7 8 0'): ").strip()
+            try:
+                puzzle = list(map(int, puzzle_input.split()))
+                if len(puzzle) != 9 or set(puzzle) != set(range(9)):
+                    print("Invalid puzzle. Please enter exactly 9 numbers from 0 to 8 without duplicates.")
+                    continue
+            except ValueError:
+                print("Invalid input. Please enter numbers only.")
+                continue
+            if puzzle.count(0) != 1:
+                print("Invalid puzzle. There must be exactly one blank tile (0).")
+                continue
+            
+            search_choice = input("\nSelect search algorithm:\n1. Uniform Cost Search\n2. A* with Misplaced Tile Heuristic\n3. A* with Manhattan Distance Heuristic\nEnter choice (1-3): ").strip()
+            if search_choice not in ['1', '2', '3']:
+                print("Invalid choice.")
+                continue
+            if search_choice == '1':
+                run_ucs(puzzle)
+            elif search_choice == '2':
+                run_a_star_misplaced(puzzle)
+            elif search_choice == '3':
+                run_a_star_manhattan(puzzle)
+                
+            
             
         elif menu_choice == "3":
             print("\nThank you for using 8-Puzzle Solver. Goodbye!")
