@@ -131,14 +131,19 @@ def run_a_star_manhattan(puzzle):
     return goal_node
 
 def print_puzzle(puzzle):
-    line = '-' + '----' * N
+    puzzle_wall = len(str(N * N - 1)) # calculate width based on largest tile number
+    line = "+" + ("-" * (puzzle_wall + 2) + "+") * N
     print(line)
     for r in range(N):
         row_str = '|'
         for c in range(N):
             value = puzzle[r * N + c]
-            row_str += "  " if value == 0 else f" {value} |" # print blank for 0, otherwise print the tile number
-
+            if value == 0:
+                cell = ' ' * (puzzle_wall) # represent blank tile with spaces
+            else:
+                cell = f"{value:>{puzzle_wall}}" # right-align the tile number
+            
+            row_str += f" {cell} |"
         print(row_str)
         print(line)
     
