@@ -1,6 +1,10 @@
 import heapq
 import copy
 
+N = 3
+goal = list(range(1, N*N)) + [0]
+goal_pos = {value: idx for idx, value in enumerate(goal)}
+
 class SearchNode:
     def __init__(self, state, parent, cost, heuristic, move='Start'):
         self.parent = parent
@@ -17,7 +21,7 @@ def find_blank_index(puzzle):
 # generate valid neighbors
 def get_neighbors(puzzle):
     blank_index = find_blank_index(puzzle)
-    blank_row, blank_col = divmod(blank_index, 3) # 3x3 puzzle assumption
+    blank_row, blank_col = divmod(blank_index, N) # 3x3 puzzle assumption
     # check which row,col blank is in and generate neighbors accordingly
     neighbors = []
     directions = [(-1, 0, 'U'), (1, 0, 'D'), (0, -1, 'L'), (0, 1, 'R')]  # Up, Down, Left, Right
@@ -26,8 +30,8 @@ def get_neighbors(puzzle):
         new_row = blank_row + dr
         new_col = blank_col + dc
 
-        if 0 <= new_row < 3 and 0 <= new_col < 3:
-            swap_index = new_row * 3 + new_col
+        if 0 <= new_row < N and 0 <= new_col < N:
+            swap_index = new_row * N + new_col
             new_puzzle = puzzle.copy()
             new_puzzle[blank_index], new_puzzle[swap_index] = new_puzzle[swap_index], new_puzzle[blank_index] # swap blank with the adjacent tile
             neighbors.append((new_puzzle, move)) # return both the new state and the move that led to it
@@ -35,34 +39,32 @@ def get_neighbors(puzzle):
     return neighbors
 
 # check if goal state
-def is_goal_state(puzzle):
-    return puzzle == [1, 2, 3, 4, 5, 6, 7, 8, 0]
+def is_goal_state(puzzle, goal):
+    return puzzle == goal
 
 def uniform_cost_search(puzzle):
     return 0
 
 def heuristic_misplaced_tiles(puzzle):
-    goal = [1, 2, 3, 4, 5, 6, 7, 8, 0]
     misplaced_count = 0
     
-    for i in range(len(puzzle)):
+    for i in range(N*N):
         if puzzle[i] != 0 and puzzle[i] != goal[i]: # don't count the blank tile
             misplaced_count += 1
             
     return misplaced_count
 
 def heuristic_manhattan_distance(puzzle):
-    goal = [1, 2, 3, 4, 5, 6, 7, 8, 0]
     total_distance = 0
     
-    for i in range(len(puzzle)):
+    for i in range(N*N):
         if puzzle[i] != 0: # skip the blank tile
             current_value = puzzle[i]
-            goal_index = goal.index(current_value)
+            goal_index = goal_pos[current_value] # get the goal position for this tile
             
             # calculate row and column for current and goal positions in a 3x3 grid
-            current_row, current_col = divmod(i, 3)
-            goal_row, goal_col = divmod(goal_index, 3)
+            current_row, current_col = divmod(i, N)
+            goal_row, goal_col = divmod(goal_index, N)
             
             # calculate Manhattan distance and add to total: row difference + column difference
             total_distance += abs(current_row - goal_row) + abs(current_col - goal_col)
@@ -83,7 +85,7 @@ def general_search(puzzle, heuristic_fn):
     
     while queue:
         _, _, current_node = heapq.heappop(queue)
-        if is_goal_state(current_node.state):
+        if is_goal_state(current_node.state, goal):
             print(f"Nodes expanded: {nodes_expanded}, Max queue size: {max_queue_size}")
             return current_node
         nodes_expanded += 1
@@ -129,16 +131,18 @@ def run_a_star_manhattan(puzzle):
     return goal_node
 
 def print_puzzle(puzzle):
-    print("\n+---+---+---+")
-    for i in range(3):
-        row = puzzle[i*3:(i+1)*3]
-        print("|", end="")
-        for tile in row:
-            if tile == 0:
-                print("   |", end="")
-            else:
-                print(f" {tile} |", end="")
-        print("\n+---+---+---+")
+    line = '-' + '----' * N
+    print(line)
+    for r in range(N):
+        row_str = '|'
+        for c in range(N):
+            value = puzzle[r * N + c]
+            row_str += "  " if value == 0 else f" {value} |" # print blank for 0, otherwise print the tile number
+
+        print(row_str)
+        print(line)
+    
+    print() # extra newline for spacing
 
 # prints out the solution path from start to goal by following parent pointers
 def print_solution_path(node):
@@ -156,6 +160,8 @@ def print_solution_path(node):
     return path
 
 def main():
+    global N, goal, goal_pos # make these global so they can be accessed in heuristic functions
+    
     # Predefined puzzles
     puzzles = { #Minecraft inspired difficulty levels
         1: ("Peaceful", [1, 2, 3, 4, 5, 6, 7, 8, 0]),
@@ -169,13 +175,37 @@ def main():
     
     while True:
         print("\n=== Main Menu ===")
-        print("1. Use a predefined puzzle")
-        print("2. Enter your own puzzle")
-        print("3. Exit")
+        
+        N = input("Enter the size of the puzzle (N for NxN, e.g. 3 for 3x3) or n/no to exit: ").strip()
+        
+        if N.lower() in ['n', 'no']:
+            print("Exiting the program.")
+            break
+        
+        try:
+            N = int(N) # convert to integer
+            if N < 2:
+                print("Invalid size. Please enter an integer greater than or equal to 2.")
+                continue
+
+        except ValueError:
+            print("Invalid input. Please enter an integer.")
+            continue
+        
+        goal = list(range(1, N*N)) + [0] # goal state for NxN puzzle
+        goal_pos = {value: idx for idx, value in enumerate(goal)} # precompute goal positions for heuristic calculations
+        if N == 3:
+            print("1. Use a predefined puzzle")
+            print("2. Enter your own puzzle")
+            print("3. Exit")
+        else:
+            print("1. Use a predefined puzzle (only available for 3x3)")
+            print("2. Enter your own puzzle")
+            print("3. Exit")
         
         menu_choice = input("\nEnter your choice (1-3): ").strip()
         
-        if menu_choice == "1":
+        if menu_choice == "1" and N == 3:
             # Show predefined puzzles
             print("\n=== Predefined Puzzles ===")
             for key, (name, puzzle) in puzzles.items():
@@ -206,19 +236,27 @@ def main():
                 run_a_star_misplaced(puzzles[int(puzzle_choice)][1])
             elif search_choice == '3':
                 run_a_star_manhattan(puzzles[int(puzzle_choice)][1])
+        elif menu_choice == "1" and N != 3:
+            print("Predefined puzzles are only available for 3x3 puzzles.")
             
         elif menu_choice == "2":
-            puzzle_input = input("\nEnter your puzzle as 9 numbers (0 for blank), separated by spaces (e.g. '1 2 3 4 5 6 7 8 0'): ").strip()
+            puzzle_input = input(f"\nEnter your puzzle as {N}*{N} (0 for blank), separated by spaces (e.g. '1 2 3 4 5 6 7 8 0'): ").strip()
             try:
                 puzzle = list(map(int, puzzle_input.split()))
-                if len(puzzle) != 9 or set(puzzle) != set(range(9)):
-                    print("Invalid puzzle. Please enter exactly 9 numbers from 0 to 8 without duplicates.")
-                    continue
             except ValueError:
                 print("Invalid input. Please enter numbers only.")
                 continue
+            
+            if len(puzzle) != N*N:
+                print(f"Invalid input. Please enter exactly {N*N} numbers.")
+                continue
+            
             if puzzle.count(0) != 1:
                 print("Invalid puzzle. There must be exactly one blank tile (0).")
+                continue
+            
+            if sorted(puzzle) != list(range(N*N)):
+                print(f"Invalid puzzle. Please enter numbers from 0 to {N*N - 1} without duplicates.")
                 continue
             
             search_choice = input("\nSelect search algorithm:\n1. Uniform Cost Search\n2. A* with Misplaced Tile Heuristic\n3. A* with Manhattan Distance Heuristic\nEnter choice (1-3): ").strip()
