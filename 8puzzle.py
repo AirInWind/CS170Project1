@@ -24,9 +24,9 @@ def get_neighbors(puzzle):
     # check which row,col blank is in and generate neighbors accordingly
     neighbors = []
     directions = [(-1, 0, 'U'), (1, 0, 'D'), (0, -1, 'L'), (0, 1, 'R')]  # Up, Down, Left, Right
-
-    for dr, dc, move in directions:
-        new_row = blank_row + dr
+    
+    for dr, dc, move in directions: # calculate new row and column for the blank tile after the move
+        new_row = blank_row + dr #
         new_col = blank_col + dc
 
         if 0 <= new_row < N and 0 <= new_col < N:
@@ -34,7 +34,6 @@ def get_neighbors(puzzle):
             new_puzzle = puzzle.copy()
             new_puzzle[blank_index], new_puzzle[swap_index] = new_puzzle[swap_index], new_puzzle[blank_index] # swap blank with the adjacent tile
             neighbors.append((new_puzzle, move)) # return both the new state and the move that led to it
-    
     return neighbors
 
 # check if goal state
@@ -50,7 +49,6 @@ def heuristic_misplaced_tiles(puzzle):
     for i in range(N*N):
         if puzzle[i] != 0 and puzzle[i] != goal[i]: # don't count the blank tile
             misplaced_count += 1
-            
     return misplaced_count
 
 def heuristic_manhattan_distance(puzzle):
@@ -67,7 +65,6 @@ def heuristic_manhattan_distance(puzzle):
             
             # calculate Manhattan distance and add to total: row difference + column difference
             total_distance += abs(current_row - goal_row) + abs(current_col - goal_col)
-            
     return total_distance
 
 def general_search(puzzle, heuristic_fn):
@@ -83,34 +80,34 @@ def general_search(puzzle, heuristic_fn):
     max_depth_states = []
     
     while queue:
-        _, _, current_node = heapq.heappop(queue)
+        _, _, current_node = heapq.heappop(queue) # ignore f and tie_breaker for now and store the node itself in the queue for easier access to its attributes
         if is_goal_state(current_node.state, goal):
-            print(f"Nodes expanded: {nodes_expanded}, Max queue size: {max_queue_size}")
+            print(f"Nodes expanded: {nodes_expanded}, Max queue size: {max_queue_size}") # print stats when goal is found
             return current_node
         nodes_expanded += 1
         
-        for neighbor, move in get_neighbors(current_node.state):
-            t = tuple(neighbor)
+        for neighbor, move in get_neighbors(current_node.state): # generate neighbors and the move that led to them
+            t = tuple(neighbor) # convert to tuple for hashing in best_g
             new_g = current_node.g + 1
             if t not in best_g or new_g < best_g[t]:
                 h = heuristic_fn(neighbor)
-                best_g[t] = new_g
+                best_g[t] = new_g # update best g(n) for this state
                 child_node = SearchNode(state=neighbor, parent=current_node, cost=new_g, heuristic=h, move=move)
-                tie_breaker += 1
+                tie_breaker += 1 # increment tie breaker for each new node to ensure unique ordering in the priority queue
                 heapq.heappush(queue, (child_node.f, tie_breaker, child_node))
             
-            if len(queue) > max_queue_size:
+            if len(queue) > max_queue_size: # track max queue size
                 max_queue_size = len(queue)
     
     print("No solution found.")
     return None
 
+# call general_search with the appropriate heuristic function based on user choice and print the solution path if found
 def run_ucs(puzzle):
     print("\n=== Running Uniform Cost Search (h=0) ===")
     goal_node = general_search(puzzle, uniform_cost_search)
     if goal_node:
         print_solution_path(goal_node)
-        
     return goal_node
 
 def run_a_star_misplaced(puzzle):
@@ -118,7 +115,6 @@ def run_a_star_misplaced(puzzle):
     goal_node = general_search(puzzle, heuristic_misplaced_tiles)
     if goal_node:
         print_solution_path(goal_node)
-        
     return goal_node
 
 def run_a_star_manhattan(puzzle):
@@ -126,7 +122,6 @@ def run_a_star_manhattan(puzzle):
     goal_node = general_search(puzzle, heuristic_manhattan_distance)
     if goal_node:
         print_solution_path(goal_node)
-        
     return goal_node
 
 def print_puzzle(puzzle):
@@ -225,8 +220,8 @@ def main():
                 print("Invalid choice.")
                 continue
 
-            puzzle = puzzles[int(puzzle_choice)][1]
-            puzzle_name = puzzles[int(puzzle_choice)][0]
+            puzzle = puzzles[int(puzzle_choice)][1] # get the selected puzzle state
+            puzzle_name = puzzles[int(puzzle_choice)][0] # get the selected puzzle name for display
             print(f"\nSelected: {puzzle_name}")
             print(f"puzzle: {puzzle}")
 
@@ -235,11 +230,11 @@ def main():
                 print("Invalid choice.")
                 continue
             if search_choice == '1':
-                run_ucs(puzzles[int(puzzle_choice)][1])
+                run_ucs(puzzles[int(puzzle_choice)][1]) # run UCS on the selected puzzle
             elif search_choice == '2':
-                run_a_star_misplaced(puzzles[int(puzzle_choice)][1])
+                run_a_star_misplaced(puzzles[int(puzzle_choice)][1]) # run A* with misplaced tile heuristic on the selected puzzle
             elif search_choice == '3':
-                run_a_star_manhattan(puzzles[int(puzzle_choice)][1])
+                run_a_star_manhattan(puzzles[int(puzzle_choice)][1]) # run A* with Manhattan distance heuristic on the selected puzzle
         elif menu_choice == "1" and N != 3:
             print("Predefined puzzles are only available for 3x3 puzzles.")
             
@@ -268,14 +263,12 @@ def main():
                 print("Invalid choice.")
                 continue
             if search_choice == '1':
-                run_ucs(puzzle)
+                run_ucs(puzzle) # run UCS on the user-entered puzzle
             elif search_choice == '2':
-                run_a_star_misplaced(puzzle)
+                run_a_star_misplaced(puzzle) # run A* with misplaced tile heuristic on the user-entered puzzle
             elif search_choice == '3':
-                run_a_star_manhattan(puzzle)
+                run_a_star_manhattan(puzzle) # run A* with Manhattan distance heuristic on the user-entered puzzle
                 
-            
-            
         elif menu_choice == "3":
             print("\nThank you for using 8-Puzzle Solver. Goodbye!")
             break
@@ -283,9 +276,6 @@ def main():
         else:
             print("Invalid choice. Please enter 1, 2, or 3.")
             continue
-        
-        # Run algorithms on the selected puzzle
-        
     
 if __name__ == "__main__":
     main()
