@@ -1,5 +1,4 @@
 import heapq
-import copy
 
 N = 3
 goal = list(range(1, N*N)) + [0]
